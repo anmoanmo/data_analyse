@@ -17,8 +17,9 @@ print(np1.size) # 大小
 
 print('----------------------------------------------------------------------')
 
-np2 = np.array([[1, 2, 3]], dtype=np.int64)
+np2 = np.array([[1, 2, 3]],dtype=np.int64)
 print(np2.dtype)
+
 print(np2)
 a =np.zeros((3, 4)) #元素全为0 的矩阵
 b = np.ones((4, 4)) # 元素全为1
