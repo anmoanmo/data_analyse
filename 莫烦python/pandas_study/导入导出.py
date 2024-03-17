@@ -9,5 +9,12 @@ import numpy as np
 import pandas as pd
 
 
-datas = pd.read_excel('2023秋季学生会基本素质加分表.xlsx')
-print(datas.loc[:100,:])
+datas = pd.read_excel('计算机学院2023-2024学年第一学期奖学金名单(1).xlsx', skiprows=3)
+#print(datas.columns)
+#print(datas.loc[:72, '序号':'获奖金额（元）'])
+datas = datas.loc[:72, '序号':'获奖金额（元）']
+datas.to_csv('奖学金·2023-2024学年秋.csv')
+#
+
+datas = pd.read_csv('奖学金·2023-2024学年秋.csv')
+print(datas)
