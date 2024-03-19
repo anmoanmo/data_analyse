@@ -6,8 +6,11 @@
 =============================
 """
 
+import numpy.matlib
 import numpy as np
 
-a = np.linspace(1, 10, 10,endpoint=False)
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[11, 12], [13, 14]])
 print(a)
-
+print(b)
+print(np.dot(a, b))

@@ -1662,6 +1662,35 @@ print (ind)
 print ('\n') 
 print ('使用这个索引来获取排序后的数据：') 
 print ([nm[i]  +  ", "  + dv[i]  for i in ind])
+
+```
+当您使用 np.lexsort((a, b, c, d)) 时，排序的逻辑是这样的：
+
+首先根据 d 对所有元素进行排序。
+在 d 相等的元素中，再根据 c 进行排序。
+在 d 和 c 都相等的元素中，再根据 b 进行排序。
+最后，在 d、c 和 b 都相等的元素中，根据 a 进行排序。
+因此，np.lexsort((a, b, c, d)) 并不是先对 a、b、c、d 全部进行排序，而是按照 d、c、b、a 的顺序依次对相等元素进行排序。换句话说，d 是首要排序键，c 是次要排序键，依此类推，直到 a。
+
+```python
+import numpy as np
+
+# 定义两个数组，分别表示学生的姓名和分数
+names = np.array(['Alice', 'Bob', 'Charlie', 'David'])
+scores = np.array([90, 80, 85, 80])
+
+# 使用 lexsort() 对学生进行排序
+# 首先根据分数（scores）排序，然后在分数相同的情况下根据姓名（names）排序
+sorted_indices = np.lexsort((names, scores))
+
+# 使用排序后的索引数组对姓名和分数进行排序
+sorted_names = names[sorted_indices]
+sorted_scores = scores[sorted_indices]
+
+# 打印排序结果
+print("Sorted names:", sorted_names)
+print("Sorted scores:", sorted_scores)
+
 ```
 
 ## msort、sort_complex、partition、argpartition
@@ -1792,3 +1821,444 @@ print (np.extract(condition, x))
 ```
 
 # 字节交换
+几乎所有的机器上，多字节对象都被存储为连续的字节序列。字节顺序，是跨越多字节的程序对象的存储规则。
+
+* 大端模式：指数据的高字节保存在内存的低地址中，而数据的低字节保存在内存的高地址中，这样的存储模式有点儿类似于把数据当作字符串顺序处理：地址由小向大增加，而数据从高位往低位放；这和我们的阅读习惯一致。
+
+* 小端模式：指数据的高字节保存在内存的高地址中，而数据的低字节保存在内存的低地址中，这种存储模式将地址的高低和数据位权有效地结合起来，高地址部分权值高，低地址部分权值低。
+
+例如在 C 语言中，一个类型为 int 的变量 x 地址为 0x100，那么其对应地址表达式&x的值为 0x100。且x的四个字节将被存储在存储器的 0x100, 0x101, 0x102, 0x103位置。
+![img_2.png](img_2.png)
+
+```python
+import numpy as np 
+ 
+a = np.array([1,  256,  8755], dtype = np.int16)  
+print ('我们的数组是：')
+print (a)
+print ('以十六进制表示内存中的数据：')
+print (map(hex,a))
+# byteswap() 函数通过传入 true 来原地交换 
+print ('调用 byteswap() 函数：')
+print (a.byteswap(True))
+print ('十六进制形式：')
+print (map(hex,a))
+# 我们可以看到字节已经交换了
+```
+```text
+我们的数组是：
+[   1  256 8755]
+以十六进制表示内存中的数据：
+<map object at 0x104acb400>
+调用 byteswap() 函数：
+[  256     1 13090]
+十六进制形式：
+<map object at 0x104acb3c8>
+```
+# 副本和视图
+副本是一个数据的完整的拷贝，如果我们对副本进行修改，它不会影响到原始数据，物理内存不在同一位置。
+
+视图是数据的一个别称或引用，通过该别称或引用亦便可访问、操作原有数据，但原有数据不会产生拷贝。如果我们对视图进行修改，它会影响到原始数据，物理内存在同一位置。
+
+视图一般发生在：
+
+- 1、numpy 的切片操作返回原数据的视图。
+- 2、调用 ndarray 的 view() 函数产生一个视图。
+
+无复制
+简单的赋值不会创建数组对象的副本。 相反，它使用原始数组的相同id()来访问它。 id()返回 Python 对象的通用标识符，类似于 C 中的指针。
+
+此外，一个数组的任何变化都反映在另一个数组上。 例如，一个数组的形状改变也会改变另一个数组的形状。
+```python
+import numpy as np 
+ 
+a = np.arange(6)  
+print ('我们的数组是：')
+print (a)
+print ('调用 id() 函数：')
+print (id(a))
+print ('a 赋值给 b：')
+b = a 
+print (b)
+print ('b 拥有相同 id()：')
+print (id(b))
+print ('修改 b 的形状：')
+b.shape =  3,2  
+print (b)
+print ('a 的形状也修改了：')
+print (a)
+```
+## 视图或浅拷贝
+ndarray.view() 方会创建一个新的数组对象，该方法创建的新数组的维数变化不会改变原始数据的维数。
+```python
+import numpy as np 
+ 
+# 最开始 a 是个 3X2 的数组
+a = np.arange(6).reshape(3,2)  
+print ('数组 a：')
+print (a)
+print ('创建 a 的视图：')
+b = a.view()  
+print (b)
+print ('两个数组的 id() 不同：')
+print ('a 的 id()：')
+print (id(a))
+print ('b 的 id()：' )
+print (id(b))
+# 修改 b 的形状，并不会修改 a
+b.shape =  2,3
+print ('b 的形状：')
+print (b)
+print ('a 的形状：')
+print (a)
+```
+使用切片创建视图修改数据会影响到原始数组：
+
+```python
+import numpy as np 
+ 
+arr = np.arange(12)
+print ('我们的数组：')
+print (arr)
+print ('创建切片：')
+a=arr[3:]
+b=arr[3:]
+a[1]=123
+b[2]=234
+print(arr)
+print(id(a),id(b),id(arr[3:]))
+```
+```text
+我们的数组：
+[ 0  1  2  3  4  5  6  7  8  9 10 11]
+创建切片：
+[  0   1   2   3 123 234   6   7   8   9  10  11]
+4545878416 4545878496 4545878576
+```
+变量 a,b 都是 arr 的一部分视图，对视图的修改会直接反映到原数据中。但是我们观察 a,b 的 id，他们是不同的，也就是说，视图虽然指向原数据，但是他们和赋值引用还是有区别的。
+
+## 副本或深拷贝
+ndarray.copy() 函数创建一个副本。 对副本数据进行修改，不会影响到原始数据，它们物理内存不在同一位置。
+```python
+import numpy as np 
+ 
+a = np.array([[10,10],  [2,3],  [4,5]])  
+print ('数组 a：')
+print (a)
+print ('创建 a 的深层副本：')
+b = a.copy()  
+print ('数组 b：')
+print (b)
+# b 与 a 不共享任何内容  
+print ('我们能够写入 b 来写入 a 吗？')
+print (b is a)
+print ('修改 b 的内容：')
+b[0,0]  =  100  
+print ('修改后的数组 b：')
+print (b)
+print ('a 保持不变：')
+print (a)
+```
+
+# 矩阵库
+NumPy 中包含了一个矩阵库 numpy.matlib，该模块中的函数返回的是一个矩阵，而不是 ndarray 对象。
+## 转置矩阵
+NumPy 中除了可以使用 numpy.transpose 函数来对换数组的维度，还可以使用 T 属性。。
+
+例如有个 m 行 n 列的矩阵，使用 t() 函数就能转换为 n 行 m 列的矩阵。
+```python
+import numpy as np
+ 
+a = np.arange(12).reshape(3,4)
+ 
+print ('原数组：')
+print (a)
+print ('\n')
+ 
+print ('转置数组：')
+print (a.T)
+```
+## matlib.empty()
+matlib.empty() 函数返回一个新的矩阵，语法格式为：
+`numpy.matlib.empty(shape, dtype, order)`
+
+```text
+参数说明：
+
+shape: 定义新矩阵形状的整数或整数元组
+Dtype: 可选，数据类型
+order: C（行序优先） 或者 F（列序优先）
+```
+```python
+import numpy.matlib 
+import numpy as np
+ 
+print (np.matlib.empty((2,2)))
+# 填充为随机数据
+```
+## numpy.matlib.zeros()
+```python
+import numpy.matlib 
+import numpy as np 
+ 
+print (np.matlib.zeros((2,2)))
+```
+## numpy.matlib.ones()
+```python
+import numpy.matlib 
+import numpy as np 
+ 
+print (np.matlib.ones((2,2)))
+```
+## numpy.matlib.eye()
+numpy.matlib.eye() 函数返回一个矩阵，对角线元素为 1，其他位置为零。
+`numpy.matlib.eye(n, M,k, dtype)`
+
+```text
+参数说明：
+
+n: 返回矩阵的行数
+M: 返回矩阵的列数，默认为 n
+k: 对角线的索引
+dtype: 数据类型
+```
+```python
+import numpy.matlib 
+import numpy as np 
+ 
+print (np.matlib.eye(n =  3, M =  4, k =  0, dtype =  float))
+```
+## numpy.matlib.identity()
+numpy.matlib.identity() 函数返回给定大小的单位矩阵。
+
+单位矩阵是个方阵，从左上角到右下角的对角线（称为主对角线）上的元素均为 1，除此以外全都为 0。
+![img_3.png](img_3.png)
+
+```python
+import numpy.matlib 
+import numpy as np 
+ 
+# 大小为 5，类型位浮点型
+print (np.matlib.identity(5, dtype =  float))
+```
+## numpy.matlib.rand()
+numpy.matlib.rand() 函数创建一个给定大小的矩阵，数据是随机填充的。
+```python
+import numpy.matlib 
+import numpy as np 
+ 
+print (np.matlib.rand(3,3))
+```
+
+矩阵总是二维的，而 ndarray 是一个 n 维数组。 两个对象都是可互换的。
+
+# 线性代数
+```text
+NumPy 提供了线性代数函数库 linalg，该库包含了线性代数所需的所有功能，可以看看下面的说明：
+
+函数	描述
+dot	两个数组的点积，即元素对应相乘。
+vdot	两个向量的点积
+inner	两个数组的内积
+matmul	两个数组的矩阵积
+determinant	数组的行列式
+solve	求解线性矩阵方程
+inv	计算矩阵的乘法逆矩阵
+```
+## numpy.dot()
+numpy.dot() 对于两个一维的数组，计算的是这两个数组对应下标元素的乘积和(数学上称之为向量点积)；对于二维数组，计算的是两个数组的矩阵乘积；对于多维数组，它的通用计算公式如下，即结果数组中的每个元素都是：数组a的最后一维上的所有元素与数组b的倒数第二位上的所有元素的乘积和： dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])。
+
+`numpy.dot(a, b, out=None) `
+```text
+参数说明：
+
+a : ndarray 数组
+b : ndarray 数组
+out : ndarray, 可选，用来保存dot()的计算结果
+```
+
+## numpy.vdot()
+numpy.vdot() 函数是两个向量的点积。 如果第一个参数是复数，那么它的共轭复数会用于计算。 如果参数是多维数组，它会被展开。
+```python
+import numpy as np 
+ 
+a = np.array([[1,2],[3,4]]) 
+b = np.array([[11,12],[13,14]]) 
+ 
+# vdot 将数组展开计算内积
+print (np.vdot(a,b))
+```
+计算过程：
+```text
+1*11 + 2*12 + 3*13 + 4*14 = 130
+```
+## numpy.inner()
+numpy.inner() 函数返回一维数组的向量内积。对于更高的维度，它返回最后一个轴上的和的乘积。
+```python
+import numpy as np 
+ 
+print (np.inner(np.array([1,2,3]),np.array([0,1,0])))
+# 等价于 1*0+2*1+3*0
+```
+```python
+import numpy as np 
+a = np.array([[1,2], [3,4]]) 
+ 
+print ('数组 a：')
+print (a)
+b = np.array([[11, 12], [13, 14]]) 
+ 
+print ('数组 b：')
+print (b)
+ 
+print ('内积：')
+print (np.inner(a,b))
+```
+输出：
+```text
+数组 a：
+[[1 2]
+ [3 4]]
+数组 b：
+[[11 12]
+ [13 14]]
+内积：
+[[35 41]
+ [81 95]]
+数组 a：
+[[1 2]
+ [3 4]]
+数组 b：
+[[11 12]
+ [13 14]]
+内积：
+[[35 41]
+ [81 95]]
+```
+计算过程：
+```text
+1*11+2*12, 1*13+2*14 
+3*11+4*12, 3*13+4*14
+```
+
+## numpy.matmul
+numpy.matmul 函数返回两个数组的矩阵乘积。 虽然它返回二维数组的正常乘积，但如果任一参数的维数大于2，则将其视为存在于最后两个索引的矩阵的栈，并进行相应广播。
+
+另一方面，如果任一参数是一维数组，则通过在其维度上附加 1 来将其提升为矩阵，并在乘法之后被去除。
+
+对于二维数组，它就是矩阵乘法：
+```python
+import numpy.matlib 
+import numpy as np 
+ 
+a = [[1,0],[0,1]] 
+b = [[4,1],[2,2]] 
+print (np.matmul(a,b))
+```
+
+```python
+import numpy.matlib 
+import numpy as np 
+ 
+a = [[1,0],[0,1]] 
+b = [1,2] 
+print (np.matmul(a,b))
+print (np.matmul(b,a))
+```
+```python
+import numpy.matlib 
+import numpy as np 
+ 
+a = np.arange(8).reshape(2,2,2) 
+b = np.arange(4).reshape(2,2) 
+print (np.matmul(a,b))
+```
+## numpy.linalg.det()
+numpy.linalg.det() 函数计算输入矩阵的行列式。
+
+行列式在线性代数中是非常有用的值。 它从方阵的对角元素计算。 对于 2×2 矩阵，它是左上和右下元素的乘积与其他两个的乘积的差。
+
+换句话说，对于矩阵[[a，b]，[c，d]]，行列式计算为 ad-bc。 较大的方阵被认为是 2×2 矩阵的组合。
+
+```python
+import numpy as np
+a = np.array([[1,2], [3,4]]) 
+ 
+print (np.linalg.det(a))
+```
+
+```python
+import numpy as np
+ 
+b = np.array([[6,1,1], [4, -2, 5], [2,8,7]]) 
+print (b)
+print (np.linalg.det(b))
+print (6*(-2*7 - 5*8) - 1*(4*7 - 5*2) + 1*(4*8 - -2*2))
+```
+## numpy.linalg.solve()
+numpy.linalg.solve() 函数给出了矩阵形式的线性方程的解。
+```text
+x + y + z = 6
+
+2y + 5z = -4
+
+2x + 5y - z = 27
+```
+![img_4.png](img_4.png)
+
+## numpy.linalg.inv()
+numpy.linalg.inv() 函数计算矩阵的乘法逆矩阵。
+
+逆矩阵（inverse matrix）：设A是数域上的一个n阶矩阵，若在相同数域上存在另一个n阶矩阵B，使得： AB=BA=E ，则我们称B是A的逆矩阵，而A则被称为可逆矩阵。注：E为单位矩阵。
+
+```python
+import numpy as np 
+ 
+x = np.array([[1,2],[3,4]]) 
+y = np.linalg.inv(x) 
+print (x)
+print (y)
+print (np.dot(x,y))
+```
+```python
+import numpy as np 
+ 
+a = np.array([[1,1,1],[0,2,5],[2,5,-1]]) 
+ 
+print ('数组 a：')
+print (a)
+ainv = np.linalg.inv(a) 
+ 
+print ('a 的逆：')
+print (ainv)
+ 
+print ('矩阵 b：')
+b = np.array([[6],[-4],[27]]) 
+print (b)
+ 
+print ('计算：A^(-1)B：')
+x = np.linalg.solve(a,b) 
+print (x)
+# 这就是线性方向 x = 5, y = 3, z = -2 的解
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
