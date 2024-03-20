@@ -27,3 +27,4 @@ res = pd.merge(left,right,on='a')
 print(res)
 res = pd.merge(left,right,on=['k1','k2'],how='inner')
 print(res)
+
