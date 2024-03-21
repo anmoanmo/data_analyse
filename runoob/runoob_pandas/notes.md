@@ -344,58 +344,481 @@ DataFrame 可以通过多种方式进行数据选择、过滤、修改和分析�
 ```
 # CSV文件
 
+```python
+import pandas as pd
+
+df = pd.read_csv('nba.csv')
+
+print(df.to_string())
+```
+to_string() 用于返回 DataFrame 类型的数据，如果不使用该函数，则输出结果为数据的前面 5 行和末尾 5 行，中间部分以 ... 代替。
+
+```python
+import pandas as pd
+
+df = pd.read_csv('nba.csv')
+
+print(df)
+```
+我们也可以使用 to_csv() 方法将 DataFrame 存储为 csv 文件:
+```python
+import pandas as pd 
+
+# 三个字段 name, site, age
+nme = ["Google", "Runoob", "Taobao", "Wiki"]
+st = ["www.google.com", "www.runoob.com", "www.taobao.com", "www.wikipedia.org"]
+ag = [90, 40, 80, 98]
+
+# 字典
+dict = {'name': nme, 'site': st, 'age': ag} 
+
+df = pd.DataFrame(dict)
+
+# 保存 dataframe
+df.to_csv('site.csv')
+```
+![img_8.png](img_8.png)
+
+## 数据处理
+### head()
+head( n ) 方法用于读取前面的 n 行，如果不填参数 n ，默认返回 5 行。
+
+```python
+import pandas as pd
+
+df = pd.read_csv('nba.csv')
+
+print(df.head())
+```
+```python
+import pandas as pd
+
+df = pd.read_csv('nba.csv')
+
+print(df.head(10))
+```
+### tail()
+tail( n ) 方法用于读取尾部的 n 行，如果不填参数 n ，默认返回 5 行，空行各个字段的值返回 NaN。
+
+```python
+import pandas as pd
+
+df = pd.read_csv('nba.csv')
+
+print(df.tail())
+```
+```python
+import pandas as pd
+
+df = pd.read_csv('nba.csv')
+
+print(df.tail(10))
+```
+### info()
+info() 方法返回表格的一些基本信息：
+
+```python
+import pandas as pd
+
+df = pd.read_csv('nba.csv')
+
+print(df.info())
+```
+# JSON
+Pandas 可以很方便的处理 JSON 数据，本文以 sites.json 为例，内容如下：
+```json
+[
+   {
+   "id": "A001",
+   "name": "菜鸟教程",
+   "url": "www.runoob.com",
+   "likes": 61
+   },
+   {
+   "id": "A002",
+   "name": "Google",
+   "url": "www.google.com",
+   "likes": 124
+   },
+   {
+   "id": "A003",
+   "name": "淘宝",
+   "url": "www.taobao.com",
+   "likes": 45
+   }
+]
+```
+
+to_string() 用于返回 DataFrame 类型的数据，我们也可以直接处理 JSON 字符串。
+```python
+import pandas as pd
+
+data =[
+ {
+ "id": "A001",
+ "name": "菜鸟教程",
+ "url": "www.runoob.com",
+ "likes": 61
+ },
+ {
+ "id": "A002",
+ "name": "Google",
+ "url": "www.google.com",
+ "likes": 124
+ },
+ {
+ "id": "A003",
+ "name": "淘宝",
+ "url": "www.taobao.com",
+ "likes": 45
+ }
+]
+df = pd.DataFrame(data)
+
+print(df)
+```
+
+JSON 对象与 Python 字典具有相同的格式，所以我们可以直接将 Python 字典转化为 DataFrame 数据：
+
+从 URL 中读取 JSON 数据：
 
 
+```python
+import pandas as pd
+URL = 'https://static.jyshare.com/download/sites.json'
+df = pd.read_json(URL)
+print(df)
 
+```
+## 内嵌的 JSON 数据
+假设有一组内嵌的 JSON 数据文件 nested_list.json ：
+```nest_list.json
+{
+    "school_name": "ABC primary school",
+    "class": "Year 1",
+    "students": [
+    {
+        "id": "A001",
+        "name": "Tom",
+        "math": 60,
+        "physics": 66,
+        "chemistry": 61
+    },
+    {
+        "id": "A002",
+        "name": "James",
+        "math": 89,
+        "physics": 76,
+        "chemistry": 51
+    },
+    {
+        "id": "A003",
+        "name": "Jenny",
+        "math": 79,
+        "physics": 90,
+        "chemistry": 78
+    }]
+}
+```
+```python
+import pandas as pd
 
+df = pd.read_json('nested_list.json')
 
+print(df)
+```
+运行结果（使用`df.to_string()`)
 
+![img_9.png](img_9.png)
 
+这时我们就需要使用到 json_normalize() 方法将内嵌的数据完整的解析出来：
 
+```python
+import pandas as pd
+import json
 
+# 使用 Python JSON 模块载入数据
+with open('nested_list.json','r') as f:
+    data = json.loads(f.read())
 
+# 展平数据
+df_nested_list = pd.json_normalize(data, record_path =['students'])
+print(df_nested_list)
+```
+![img_10.png](img_10.png)
 
+```test
+data = json.loads(f.read()) 使用 Python JSON 模块载入数据。
 
+json_normalize() 使用了参数 record_path 并设置为 ['students'] 用于展开内嵌的 JSON 数据 students。
+```
+显示结果还没有包含 school_name 和 class 元素，如果需要展示出来可以使用 meta 参数来显示这些元数据：
 
+```python
+import pandas as pd
+import json
 
+# 使用 Python JSON 模块载入数据
+with open('nested_list.json','r') as f:
+    data = json.loads(f.read())
 
+# 展平数据
+df_nested_list = pd.json_normalize(
+    data,
+    record_path =['students'],
+    meta=['school_name', 'class']
+)
+print(df_nested_list)
 
+```
+### 读取内嵌数据中的一组数据
+这里我们需要使用到 glom 模块来处理数据套嵌，glom 模块允许我们使用 . 来访问内嵌对象的属性。
+```python
+import pandas as pd
+from glom import glom
 
+df = pd.read_json('nested_deep.json')
 
+data = df['students'].apply(lambda row: glom(row, 'grade.math'))
+print(data)
+```
+# 数据清洗
+## pandas清洗空值
+如果我们要删除包含空字段的行，可以使用 dropna() 方法，语法格式如下：
+`DataFrame.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False)`
+```text
+参数说明：
 
+axis：默认为 0，表示逢空值剔除整行，如果设置参数 axis＝1 表示逢空值去掉整列。
+how：默认为 'any' 如果一行（或一列）里任何一个数据有出现 NA 就去掉整行，如果设置 how='all' 一行（或列）都是 NA 才去掉这整行。
+thresh：设置需要多少非空值的数据才可以保留下来的。
+subset：设置想要检查的列。如果是多个列，可以使用列名的 list 作为参数。
+inplace：如果设置 True，将计算得到的值直接覆盖之前的值并返回 None，修改的是源数据。
+我们可以通过 isnull() 判断各个单元格是否为空。
+```
+```python
+import pandas as pd
 
+df = pd.read_csv('property-data.csv')
 
+print (df['NUM_BEDROOMS'])
+print (df['NUM_BEDROOMS'].isnull())
+```
+![img_11.png](img_11.png)
 
+以上例子中我们看到 Pandas 把 n/a 和 NA 当作空数据，na 不是空数据，不符合我们要求，我们可以指定空数据类型：
 
+```python
+import pandas as pd
 
+missing_values = ["n/a", "na", "--"]
+df = pd.read_csv('property-data.csv', na_values = missing_values)
 
+print (df['NUM_BEDROOMS'])
+print (df['NUM_BEDROOMS'].isnull())
+```
+![img_12.png](img_12.png)
 
+```python
+import pandas as pd
 
+df = pd.read_csv('property-data.csv')
 
+new_df = df.dropna()
 
+print(new_df.to_string())
+```
+![img_13.png](img_13.png)
 
+注意：默认情况下，dropna() 方法返回一个新的 DataFrame，不会修改源数据。
 
+如果你要修改源数据 DataFrame, 可以使用 inplace = True 参数:
 
+```python
+import pandas as pd
 
+df = pd.read_csv('property-data.csv')
 
+df.dropna(inplace = True)
 
+print(df.to_string())
+```
+我们也可以移除指定列有空值的行：
 
+```python
+import pandas as pd
 
+df = pd.read_csv('property-data.csv')
 
+df.dropna(subset=['ST_NUM'], inplace = True)
 
+print(df.to_string())
+```
+![img_14.png](img_14.png)
 
+我们也可以 fillna() 方法来替换一些空字段：
 
+```python
+import pandas as pd
 
+df = pd.read_csv('property-data.csv')
 
+df.fillna(12345, inplace = True)
 
+print(df.to_string())
+```
+![img_15.png](img_15.png)
 
+```python
+import pandas as pd
 
+df = pd.read_csv('property-data.csv')
 
+df['PID'].fillna(12345, inplace = True)
 
+print(df.to_string())
+```
+![img_16.png](img_16.png)
 
+替换空单元格的常用方法是计算列的均值、中位数值或众数。
 
+Pandas使用 mean()、median() 和 mode() 方法计算列的均值（所有值加起来的平均值）、中位数值（排序后排在中间的数）和众数（出现频率最高的数）。
 
+```python
+#使用 mean() 方法计算列的均值并替换空单元格：
+import pandas as pd
 
+df = pd.read_csv('property-data.csv')
+
+x = df["ST_NUM"].mean()
+
+df["ST_NUM"].fillna(x, inplace = True)
+
+print(df.to_string())
+```
+```python
+# 使用 median() 方法计算列的中位数并替换空单元格：
+import pandas as pd
+
+df = pd.read_csv('property-data.csv')
+
+x = df["ST_NUM"].median()
+
+df["ST_NUM"].fillna(x, inplace = True)
+
+print(df.to_string())
+```
+```python
+#使用 mode() 方法计算列的众数并替换空单元格：
+import pandas as pd
+
+df = pd.read_csv('property-data.csv')
+
+x = df["ST_NUM"].mode()
+
+df["ST_NUM"].fillna(x, inplace = True)
+
+print(df.to_string())
+```
+
+## Pandas 清洗格式错误数据
+我们可以通过包含空单元格的行，或者将列中的所有单元格转换为相同格式的数据。
+```python
+import pandas as pd
+
+# 第三个日期格式错误
+data = {
+"Date": ['2020/12/01', '2020/12/02' , '20201226'],
+"duration": [50, 40, 45]
+}
+
+df = pd.DataFrame(data, index = ["day1", "day2", "day3"])
+
+df['Date'] = pd.to_datetime(df['Date'])
+
+print(df.to_string())
+```
+## 清洗错误数据
+```python
+import pandas as pd
+
+person = {
+  "name": ['Google', 'Runoob' , 'Taobao'],
+  "age": [50, 40, 12345]    # 12345 年龄数据是错误的
+}
+
+df = pd.DataFrame(person)
+
+df.loc[2, 'age'] = 30 # 修改数据
+
+print(df.to_string())
+```
+也可以设置条件语句：
+
+ ```python
+ # (将 age 大于 120 的设置为 120:)
+import pandas as pd
+
+person = {
+  "name": ['Google', 'Runoob' , 'Taobao'],
+  "age": [50, 200, 12345]    
+}
+
+df = pd.DataFrame(person)
+
+for x in df.index:
+  if df.loc[x, "age"] > 120:
+    df.loc[x, "age"] = 120
+
+print(df.to_string())
+```
+```python
+#将 age 大于 120 的删除:
+import pandas as pd
+
+person = {
+  "name": ['Google', 'Runoob' , 'Taobao'],
+  "age": [50, 40, 12345]    # 12345 年龄数据是错误的
+}
+
+df = pd.DataFrame(person)
+
+for x in df.index:
+  if df.loc[x, "age"] > 120:
+    df.drop(x, inplace = True)
+
+print(df.to_string())
+```
+## 清洗重复数据
+如果我们要清洗重复数据，可以使用 duplicated() 和 drop_duplicates() 方法。
+
+如果对应的数据是重复的，duplicated() 会返回 True，否则返回 False。
+
+```python
+import pandas as pd
+
+person = {
+  "name": ['Google', 'Runoob', 'Runoob', 'Taobao'],
+  "age": [50, 40, 40, 23]  
+}
+df = pd.DataFrame(person)
+
+print(df.duplicated())
+```
+删除重复数据，可以直接使用drop_duplicates() 方法。
+
+```python
+import pandas as pd
+
+persons = {
+  "name": ['Google', 'Runoob', 'Runoob', 'Taobao'],
+  "age": [50, 40, 40, 23]  
+}
+
+df = pd.DataFrame(persons)
+
+df.drop_duplicates(inplace = True)
+```
 
 
 
